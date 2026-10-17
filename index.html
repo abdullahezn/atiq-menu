@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#3B432A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="منيو عتيق">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-512.png">
+<title>منيو عتيق</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Bebas+Neue&family=Tajawal:wght@400;500;700;800&display=swap">
+<style>
+/* Layout (tablet): slim header with logo + sections, the dish photo filling nearly the whole screen, one info strip underneath (name · description · price), game-style progress bar. Swipe changes dish with motion blur. Single dark olive-to-piano-wood look. */
+:root{
+  --bg:#1F2416; --olive:#3B432A; --wood:#3A2416; --wood-hi:#6B3F1F; --line:rgba(226,201,140,.18);
+  --cream:#F3EDDA; --muted:#A8A28A; --gold:#D3B26A; --gold-hi:#F0DBA4; --ink:#14170E;
+  --f-display:"Aref Ruqaa","Amiri",serif; --f-body:"Tajawal",system-ui,-apple-system,sans-serif; --f-num:"Bebas Neue","Oswald",Impact,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;background:var(--bg)}
+html{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;overscroll-behavior:none}
+body{color:var(--cream);font-family:var(--f-body);direction:rtl;overflow:hidden;
+  background:
+    linear-gradient(rgba(237,232,215,.04) 1px,transparent 1px) 0 0/48px 48px,
+    linear-gradient(90deg,rgba(237,232,215,.04) 1px,transparent 1px) 0 0/48px 48px,
+    radial-gradient(110% 55% at 50% 110%,var(--wood-hi),transparent 62%),
+    linear-gradient(180deg,var(--olive) 0%,#2E3420 45%,var(--wood) 100%)}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+button:focus-visible{outline:2px solid var(--gold-hi);outline-offset:3px}
+.app{height:100%;padding-inline:16px;padding-block:8px 10px;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto auto;gap:10px}
+
+.top{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:16px}
+.logo img{height:clamp(46px,7vh,72px);width:auto;display:block}
+.cats{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;justify-content:center}
+.cats::-webkit-scrollbar{display:none}
+.cat{flex:none;padding:10px 18px;border-radius:999px;border:1px solid var(--line);font-size:clamp(14px,1.7vw,18px);color:var(--muted);white-space:nowrap;transition:.25s;background:rgba(18,21,13,.25)}
+.cat.on{background:var(--gold);border-color:var(--gold);color:var(--ink);font-weight:800}
+.tl{display:flex;align-items:center;gap:12px}
+.idx{font-family:var(--f-num);font-size:18px;letter-spacing:.14em;color:var(--muted);direction:ltr}
+.idx b{font-weight:400;font-size:30px;color:var(--gold-hi)}
+.fs{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);display:grid;place-items:center;color:var(--gold-hi)}
+
+/* stage: photo fills it */
+.stage{position:relative;min-height:0;touch-action:pan-y;user-select:none;-webkit-user-select:none;cursor:grab;border-radius:24px;overflow:hidden;
+  box-shadow:0 0 0 1px rgba(240,219,164,.3),0 30px 60px -20px rgba(0,0,0,.7);background:#151810}
+.stage:active{cursor:grabbing}
+.car{position:absolute;inset:0;pointer-events:none;will-change:transform,filter,opacity}
+.frame,.frame img{width:100%;height:100%}
+.frame img{display:block;object-fit:cover}
+.glow{display:none}
+.lines{position:absolute;inset:10% 0;pointer-events:none;opacity:0;z-index:2;
+  background:repeating-linear-gradient(180deg,transparent 0 14px,rgba(240,219,164,.25) 14px 15px,transparent 15px 34px);
+  -webkit-mask:linear-gradient(90deg,transparent,#000 25%,#000 75%,transparent);mask:linear-gradient(90deg,transparent,#000 25%,#000 75%,transparent)}
+.lines.go{animation:lines .55s ease-out}
+@keyframes lines{25%{opacity:1;transform:scaleX(1.2)}100%{opacity:0}}
+.arrow{position:absolute;top:50%;translate:0 -50%;z-index:4;width:64px;height:64px;border-radius:50%;display:grid;place-items:center;
+  border:1px solid rgba(240,219,164,.35);background:rgba(18,21,13,.55);color:var(--gold-hi);backdrop-filter:blur(8px);transition:transform .15s}
+.arrow svg{width:28px;height:28px}
+.arrow:active{transform:scale(.9)}
+.arrow.l{left:18px}.arrow.r{right:18px}
+.hint{position:absolute;bottom:18px;left:50%;translate:-50% 0;z-index:3;display:flex;align-items:center;gap:10px;font-size:15px;color:var(--cream);white-space:nowrap;
+  background:rgba(18,21,13,.7);border-radius:999px;padding:8px 16px 8px 12px;transition:opacity .5s}
+.hint i{display:block;width:20px;height:20px;border-radius:50%;border:1.5px solid var(--gold-hi);animation:swipe 1.6s ease-in-out infinite}
+@keyframes swipe{0%{transform:translateX(-12px);opacity:0}30%{opacity:1}100%{transform:translateX(12px);opacity:0}}
+.hint.off{opacity:0}
+
+/* info strip */
+.info{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-rows:auto auto;align-items:center;gap:0 24px;padding-inline:6px;min-height:92px}
+.k{grid-column:1;grid-row:1;font-size:clamp(13px,1.4vw,16px);color:var(--gold);letter-spacing:.06em;display:flex;gap:8px;align-items:center}
+.k .sig{background:var(--gold);color:var(--ink);border-radius:6px;padding:1px 8px;font-weight:800;font-size:12px}
+.name{grid-column:1;grid-row:2;margin:0;font-family:var(--f-display);font-weight:700;font-size:clamp(34px,4.6vw,58px);line-height:1.1;color:var(--gold-hi);white-space:nowrap}
+.desc{grid-column:2;grid-row:1/3;margin:0;color:var(--cream);opacity:.85;font-size:clamp(15px,1.8vw,21px);line-height:1.5;border-inline-start:1px solid var(--line);padding-inline-start:24px}
+.price{grid-column:3;grid-row:1/3;display:flex;align-items:baseline;gap:8px;border:1px solid var(--line);border-radius:18px;padding:8px 22px;background:rgba(18,21,13,.45)}
+.price b{font-family:var(--f-num);font-weight:400;font-size:clamp(44px,5.6vw,70px);line-height:1;color:var(--cream)}
+.price span{font-size:15px;color:var(--muted)}
+.chip{grid-column:2;grid-row:3;justify-self:start;margin-top:6px;margin-inline-start:24px;font-size:14px;color:var(--gold-hi);border:1px dashed var(--line);border-radius:999px;padding:3px 12px}
+.in{animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+@keyframes rise{from{opacity:0;transform:translateX(var(--fx,0));filter:blur(8px)}}
+
+.bars{display:flex;gap:5px}
+.bars button{flex:1;height:22px;display:grid;align-items:center}
+.bars button::before{content:"";display:block;height:4px;border-radius:2px;background:rgba(240,219,164,.18);transition:.3s}
+.bars button.on::before{background:var(--gold-hi);height:6px;box-shadow:0 0 12px rgba(240,219,164,.6)}
+
+/* portrait tablet: stack info, keep photo big */
+@media (orientation:portrait){
+  .top{grid-template-columns:auto minmax(0,1fr)}
+  .tl{grid-column:2;justify-self:end}
+  .cats{grid-column:1/-1;grid-row:2;justify-content:flex-start}
+  .info{grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto auto}
+  .k{grid-column:1;grid-row:1}.name{grid-column:1;grid-row:2;white-space:normal}
+  .price{grid-column:2;grid-row:1/3}
+  .desc{grid-column:1/-1;grid-row:3;border:0;padding:0;margin-top:4px}
+  .chip{grid-column:1/-1;grid-row:4;margin-inline-start:0}
+}
+@media (max-width:700px){.arrow{width:48px;height:48px}.cat{padding:7px 13px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+<style>body{margin:0}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="top">
+    <div class="logo"><img src="logo.png" alt="عتيق"></div>
+    <nav class="cats" id="cats" aria-label="الأقسام"></nav>
+    <div class="tl"><span class="idx" id="idx"></span><button class="fs" id="fs" type="button" aria-label="ملء الشاشة" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button></div>
+  </div>
+  <div class="stage" id="stage">
+    <div class="lines" id="lines"></div>
+    <div id="cars"></div>
+    <button class="arrow r" id="prev" type="button" aria-label="الصنف السابق"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m9 18 6-6-6-6"/></svg></button>
+    <button class="arrow l" id="next" type="button" aria-label="الصنف التالي"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m15 18-6-6 6-6"/></svg></button>
+    <div class="hint" id="hint"><i></i>اسحب يمين للصنف التالي</div>
+  </div>
+  <div class="info" id="info"></div>
+  <div class="bars" id="bars"></div>
+</div>
+
+<script>
+/* ===== المنيو — عدّل الأسماء والأسعار من هنا ===== */
+const CATS=[['special','عتيق سبيشل','SPECIAL'],['manaqish','مناقيش عتيق','MANAKISH'],['pizza','منقوشات البيتزا','PIZZA'],['sandwich','سندوتشات','SANDWICH'],['sweets','سويتات','SWEETS'],['drinks','مشروبات','DRINKS']];
+const M=[
+ ['special','سبانخ عتيق','ATIQ SPINACH',14,'p17','سبانخ مع لبنة ورمان وطماطم'],
+ ['special','منقوشة البوراتا','BURRATA',14,'p35','بوراتا طرية على صلصة الطماطم',{hot:1}],
+ ['special','مسخن عتيق','MUSAKHAN',15,'p33','دجاج بالسماق والبصل المكرمل',{hot:1}],
+ ['special','بيستو حلوم','PESTO',15,'p07','حلوم مع صوص البيستو',{hot:1}],
+ ['special','تين عتيق','FIG',14,'p09','تين وجبن بلمسة حلوة'],
+ ['special','طماطم عتيق','TOMATO',14,'p20','طماطم طازجة وجبن'],
+ ['special','مكدوس عتيق','MAKDOUS',14,'p34','مكدوس بالجوز وزيت الزيتون'],
+ ['manaqish','عكاوي','AKKAWI',11,'p21','جبنة عكاوي ذايبة وورق ريحان'],
+ ['manaqish','عكاوي بالزعتر','AKKAWI ZAATAR',11,'p26','جبنة عكاوي مع زعتر بلدي'],
+ ['manaqish','سبانخ بالجبن','SPINACH CHEESE',11,'p16','سبانخ مع طبقة جبن ذايبة'],
+ ['manaqish','لحم بالعجين','LAHM AJEEN',10,'p30','لحم مفروم بالطماطم والبهارات',{ch:1}],
+ ['manaqish','زعتر','ZAATAR',8,'p11','زعتر بلدي وزيت زيتون على عجينة عتيق'],
+ ['manaqish','لبنة','LABNEH',8,'p29','لبنة كريمية على عجينة طازجة'],
+ ['manaqish','لبنة بالزعتر','LABNEH ZAATAR',8,'p26','لبنة مع زعتر وزيت زيتون'],
+ ['manaqish','لبنة بالعسل','LABNEH HONEY',8,'p28','لبنة بلمسة عسل'],
+ ['manaqish','جبن سايل','CHEESE',8,'p10','منقوشة مطوية بجبن سايل'],
+ ['manaqish','سبانخ','SPINACH',8,'p18','سبانخ بالبصل والسماق والليمون',{ch:1}],
+ ['manaqish','محمرة','MUHAMMARA',8,'p32','فلفل أحمر مشوي ودبس رمان',{ch:1}],
+ ['manaqish','فلافل باللبنة','FALAFEL',8,'p22','فلافل مقرمشة مع لبنة'],
+ ['pizza','مارقاريتا','MARGHERITA',14,'p31','صلصة طماطم وموزاريلا وريحان'],
+ ['pizza','بيبروني','PEPPERONI',14,'p05','بيبروني وموزاريلا'],
+ ['pizza','بيتزا اللحم','MEAT',17,'p06','لحم مفروم وموزاريلا'],
+ ['pizza','بيتزا الخضار','VEGGIE',14,'p36','فلفل ملوّن وزيتون وطماطم'],
+ ['pizza','الرانش','RANCH',14,'p03','دجاج مع صوص الرانش والجبن'],
+ ['pizza','عش البلبل','BULBUL NEST',14,'p28','منقوشة عش البلبل بلمسة عسل'],
+ ['sandwich','سندوتش فلافل','FALAFEL',8,'p14','فلافل مع صوص وخضار'],
+ ['sandwich','سندوتش حلوم','HALLOUMI',12,'p12','حلوم مشوي مع بيستو وطماطم'],
+ ['sandwich','سندوتش لحم','STEAK',16,'p15','لحم مع بيستو'],
+ ['sandwich','سندوتش دجاج مسخن','CHICKEN',11,'p13','دجاج مسخن مع بصل مخلل'],
+ ['sandwich','سندوتش أومليت','OMELETTE',8,'p04','بيض أومليت وجبن'],
+ ['sweets','كوكيز بالتوت','BLUEBERRY',12,'p24','كوكيز طري بحبات التوت'],
+ ['sweets','كوكيز بالفراولة','STRAWBERRY',12,'p25','كوكيز بقطع الفراولة'],
+ ['sweets','كوكيز بالتوت المشكّل','MIXED BERRY',12,'p23','توت مشكّل وشوكولاتة بيضاء'],
+ ['sweets','بيكان تارت','PECAN',14,'p08','بيكان وكراميل على عجينة هشة'],
+ ['drinks','شاي','TEA',2,'p19','شاي أحمر بالبيالة'],
+ ['drinks','بيبسي','PEPSI',3,'d_pepsi','علبة باردة'],
+ ['drinks','دايت بيبسي','DIET PEPSI',3,'d_diet','علبة باردة بدون سكر'],
+ ['drinks','سفن أب','7UP',3,'d_7up','علبة باردة'],
+ ['drinks','سفن أب فري','7UP FREE',3,'d_7free','علبة باردة بدون سكر'],
+ ['drinks','ماونتن ديو','MOUNTAIN DEW',3,'d_mtn','علبة باردة']
+].map((r,i)=>({i,c:r[0],n:r[1],en:r[2],p:r[3],img:(r[4].startsWith('d_')?'drinks/':'zoom/')+r[4]+'.jpg',d:r[5],...(r[6]||{})}));
+/* ================================================= */
+
+const $=s=>document.querySelector(s);
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let cur=0,busy=false,carEl=null,RUN=[];
+M.forEach(x=>{const im=new Image();im.src=x.img});
+
+function makeCar(it){
+  const c=document.createElement('div');c.className='car';
+  c.innerHTML=`<div class="frame"><img src="${it.img}" alt="${it.n}" draggable="false"><span class="glow"></span></div>`;
+  $('#cars').appendChild(c);return c;
+}
+function paint(side){
+  const it=M[cur],fx=(side||0)*-30+'px';
+  $('#idx').innerHTML=`<b>${String(cur+1).padStart(2,'0')}</b> / ${M.length}`;
+  $('#info').style.setProperty('--fx',fx);
+  $('#info').innerHTML=`<div class="k in">${CATS.find(c=>c[0]===it.c)[1]}${it.hot?'<span class="sig">مميز</span>':''}</div>
+    <h1 class="name in" style="animation-delay:.06s">${it.n}</h1>
+    <div class="price in" style="animation-delay:.12s"><b>${it.p}</b><span>ريال</span></div>
+    <p class="desc in" style="animation-delay:.16s">${it.d}</p>
+    ${it.ch?'<span class="chip in" style="animation-delay:.2s">تقدر تضيف جبنة +٣ ر.س</span>':''}`;
+  document.querySelectorAll('.cat').forEach(b=>{const on=b.dataset.c===it.c;b.classList.toggle('on',on);if(on)b.scrollIntoView({inline:'center',block:'nearest'})});
+  $('#bars').innerHTML=M.filter(x=>x.c===it.c).map(x=>`<button type="button" class="${x.i===cur?'on':''}" data-i="${x.i}" aria-label="${x.n}"></button>`).join('');
+}
+
+/* side +1: dish travels right, next one enters from the left (Arabic reading order) */
+function go(to,side){
+  to=(to+M.length)%M.length;
+  if(to===cur)return;
+  if(busy){RUN.forEach(a=>{try{a.finish()}catch(e){}});}
+  side=side||(to>cur?1:-1);busy=true;
+  const out=carEl;document.querySelectorAll('.car').forEach(c=>{if(c!==out)c.remove()});const inn=makeCar(M[to]),W=$('#stage').clientWidth,d=reduce?1:540,x0=out._dx||0;
+  const a1=out.animate([
+    {transform:`translateX(${x0}px)`,filter:`blur(${Math.min(Math.abs(x0)/22,10)}px)`,opacity:1},
+    {transform:`translateX(${side*W*.95}px) scaleX(1.35) skewX(${-side*8}deg)`,filter:'blur(26px)',opacity:0}
+  ],{duration:d*.75,easing:'cubic-bezier(.55,0,.9,.45)',fill:'forwards'});a1.onfinish=()=>out.remove();
+  const a2=inn.animate([
+    {transform:`translateX(${-side*W*.95}px) scaleX(1.35) skewX(${-side*8}deg)`,filter:'blur(26px)',opacity:0},
+    {transform:`translateX(${-side*W*.05}px) scaleX(1.04) skewX(${-side*1.5}deg)`,filter:'blur(3px)',opacity:1,offset:.68},
+    {transform:'none',filter:'blur(0)',opacity:1}
+  ],{duration:d,delay:reduce?0:110,easing:'cubic-bezier(.12,.85,.25,1)',fill:'backwards'});a2.onfinish=()=>{busy=false};RUN=[a1,a2];
+  if(!reduce){for(const id of ['lines']){const e=document.getElementById(id);e.classList.remove('go');void e.offsetWidth;e.classList.add('go')}}
+  try{navigator.vibrate&&navigator.vibrate(10)}catch(e){}
+  carEl=inn;cur=to;paint(side);$('#hint').classList.add('off');
+}
+const next=()=>go(cur+1,1),prev=()=>go(cur-1,-1);
+$('#next').onclick=next;$('#prev').onclick=prev;
+addEventListener('keydown',e=>{if(e.key==='ArrowLeft')next();if(e.key==='ArrowRight')prev()});
+$('#cats').innerHTML=CATS.map(c=>`<button class="cat" type="button" data-c="${c[0]}">${c[1]}</button>`).join('');
+$('#cats').onclick=e=>{const b=e.target.closest('[data-c]');if(b){const i=M.findIndex(x=>x.c===b.dataset.c);go(i,i>cur?1:-1)}};
+$('#bars').onclick=e=>{const b=e.target.closest('[data-i]');if(b){const i=+b.dataset.i;go(i,i>cur?1:-1)}};
+
+/* drag: the dish follows the finger and blurs with speed; swipe right = next */
+const st=$('#stage');let sx=null,sy=0,drag=false;
+st.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;sx=e.clientX;sy=e.clientY;drag=false});
+st.addEventListener('pointermove',e=>{if(sx===null)return;const dx=e.clientX-sx;
+  if(!drag&&Math.abs(dx)>8&&Math.abs(dx)>Math.abs(e.clientY-sy)){drag=true;try{st.setPointerCapture(e.pointerId)}catch(_){}}
+  if(drag){carEl._dx=dx;const a=Math.abs(dx);carEl.style.transform=`translateX(${dx}px) scaleX(${1+Math.min(a/800,.2)}) skewX(${-Math.sign(dx)*Math.min(a/40,6)}deg)`;carEl.style.filter=`blur(${Math.min(a/22,10)}px)`}});
+function end(e){if(sx===null)return;const dx=e.clientX-sx;sx=null;if(!drag)return;drag=false;
+  if(Math.abs(dx)>55){dx>0?next():prev()}
+  else{const el=carEl;el.animate([{transform:el.style.transform,filter:el.style.filter},{transform:'none',filter:'blur(0)'}],{duration:280,easing:'cubic-bezier(.2,.8,.2,1)'});el.style.transform='';el.style.filter='';el._dx=0}}
+st.addEventListener('pointerup',end);st.addEventListener('pointercancel',end);
+
+/* tablet: fullscreen button + keep screen awake */
+const fsb=$('#fs'),de=document.documentElement;
+if(de.requestFullscreen||de.webkitRequestFullscreen){fsb.hidden=false;fsb.onclick=()=>{try{const r=document.fullscreenElement?document.exitFullscreen():(de.requestFullscreen||de.webkitRequestFullscreen).call(de);if(r&&r.catch)r.catch(()=>{fsb.hidden=true})}catch(e){fsb.hidden=true}}}
+let wl=null;async function wake(){try{if('wakeLock' in navigator&&!wl){wl=await navigator.wakeLock.request('screen');wl.addEventListener('release',()=>{wl=null})}}catch(e){}}
+addEventListener('pointerdown',wake);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')wake()});
+addEventListener('contextmenu',e=>e.preventDefault());
+carEl=makeCar(M[0]);paint(0);
+setTimeout(()=>$('#hint').classList.add('off'),7000);
+</script>
+
+</body>
+</html>
